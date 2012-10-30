@@ -23,22 +23,22 @@ def to_string(p):
 
 def show(p):
     print('''
- {}  | {}  | {}
-----+----+----
- {}  | {}  | {}
-----+----+----
- {}  | {}  | {}
+ {} | {} | {}
+---+---+---
+ {} | {} | {}
+---+---+---
+ {} | {} | {}
 
 '''.format(*[x if x is not None else i for i, x in enumerate(p)]))
 
 def three_in_a_row(position, line):
-    "Return 'X' or 'O' if line is three in a row of that mark in position."
+    "Return 'X' or 'O' if line is three in a row of that mark in position, None otherwise"
     marks = [ position[i] for i in line if position[i] is not None ]
     return marks[0] if len(marks) == 3 and len(set(marks)) == 1 else None
 
 def is_legal(position):
     threes = [x for x in (three_in_a_row(position, line) for line in lines) if x is not None]
-    if len(set(threes)) == 1 and just_played(position) == threes[0]:
+    if len(set(threes)) == 1 and to_play(position) != threes[0]:
         return threes[0]
     elif len(threes) == 0:
         if moves(position) == 9:
@@ -54,24 +54,27 @@ def moves(position):
 def to_play(position):
     return 'XO'[position.count('X') - position.count('O')]
 
-def just_played(position):
-    return 'OX'[position.count('X') - position.count('O')]
-
 def legal_positions(n):
-    def walk(n, board, seen):
-        to_move = 'XO'[(9 - n) % 2]
+    "Generate all legal positions of N moves."
+    def walk(n, position, seen):
+        mark = 'XO'[(9 - n) % 2]
         if n > 0:
             for i in range(9):
-                if board[i] is None:
-                    b = board[:]
-                    b[i] = to_move
-                    if tuple(b) not in seen:
-                        seen.add(tuple(b))
-                        for x in walk(n - 1, b, seen): yield x
+                if position[i] is None:
+                    p = position[:]
+                    p[i] = mark
+                    if tuple(p) not in seen:
+                        seen.add(tuple(p))
+                        for x in walk(n - 1, p, seen): yield x
         else:
-            if is_legal(board): yield board
+            if is_legal(position): yield position
 
     for x in walk(n, [None] * 9, set()): yield x
+
+def other_legal_positions(n):
+    marks = list('XOXOXOXOX'[:n]) + ([None] * (9 - n))
+
+    return set(p for p in set(p for p in permutations(marks, 9)) if is_legal(p))
 
 def score(position, db):
     state = is_legal(position)
@@ -101,18 +104,8 @@ def find_best_score(position, db):
             return score < best_score
 
     for move, p in possible_moves(position):
-        if not p in db:
-            raise Exception("Can't find {} in db".format(p))
-
-        if 'score' not in db[p]:
-            raise Exception("No score in {}".format(db[p]))
-
         score = db[p]['score']
         if verbose: print('  Move {} to {} => score: {}'.format(move, to_string(p), score))
-
-        if score is None:
-            raise Exception('score is None for {} => {}'.format(p, db[p]))
-
         if best_score is None or better(score):
             best_score = score
             moves = [ move ]
@@ -121,7 +114,6 @@ def find_best_score(position, db):
 
 
     return { 'score': best_score, 'moves': moves }
-
 
 def possible_moves(position):
     mark = to_play(position)
@@ -135,27 +127,27 @@ def possible_moves(position):
 
 def play(db, position=None):
     if position is None:
-        board = [None]  * 9
+        position = [None]  * 9
     else:
-        board = [ x if x != '_' else None for x in position ]
+        position = [ x if x != '_' else None for x in position ]
 
-    while is_legal(board) == 'in_progress':
-        show(board)
-        print(db[to_string(board)])
+    while is_legal(position) == 'in_progress':
+        show(position)
+        print(db[to_string(position)])
         print('')
-        if to_play(board) == 'X':
+        if to_play(position) == 'X':
             move = int(input("Move: "))
         else:
-            move = pick_move(board, db)
+            move = pick_move(position, db)
 
-        board[move] = to_play(board)
+        position[move] = to_play(position)
 
-    show(board)
-    print(is_legal(board))
+    show(position)
+    print(is_legal(position))
 
 
-def pick_move(board, db):
-    return random.choice(db[to_string(board)]['moves'])
+def pick_move(position, db):
+    return random.choice(db[to_string(position)]['moves'])
 
 def load_db():
     db = {}
@@ -165,6 +157,9 @@ def load_db():
     return db
 
 if __name__ == '__main__':
+
+    for i in range(10):
+        print('{} => {}'.format(i, (other_legal_positions(9) == set(tuple(p) for p in legal_positions(9)))))
 
     import sys
 
