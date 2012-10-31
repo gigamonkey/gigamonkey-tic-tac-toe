@@ -1,0 +1,3 @@
+Simple tic-tac-toe game based on the idea of Ken Thompson's perfect
+chess endgame player. Code golfed as far as I could without totally
+obfuscating it to get it under 100 lines.
