@@ -37,27 +37,40 @@ def possible_moves(position):
         new = position[:i] + (mark,) + position[i+1:]
         if game_state(new): yield i, new
 
-def search(position):
+def alphabeta(position, a=float('-inf'), b=float('inf')):
     state = game_state(position)
-    if   state == 'X': return (1, None)
-    elif state == 'O': return (-1, None)
-    elif state == 'draw': return (0, None)
+    if   state == 'X': return 1
+    elif state == 'O': return -1
+    elif state == 'draw': return 0
     elif state == 'in_progress':
-        player     = to_play(position)
-        best_score = None
-        best_move  = None
+        if to_play(position) == 'X':
+            for m, p in possible_moves(position):
+                a = max(a, alphabeta(p, a, b))
+                if b <= a: break
+            return a
+        else:
+            for m, p in possible_moves(position):
+                b = min(b, alphabeta(p, a, b))
+                if b <= a: break
+            return b
 
-        def better(s):
-            return s > best_score if player == 'X' else s < best_score
+def search(position):
+    best_score = None
+    best_moves = None
 
-        for m, p in possible_moves(position):
-            score, _ = search(p)
-            if best_score is None or better(score):
-                best_score = score
-                best_move = m
-        return (best_score, best_move)
+    player = to_play(position)
 
-    else: raise Exception("Can't score illegal position {}".format(position))
+    def better(s):
+        return s > best_score if player == 'X' else s < best_score
+
+    for m, p in possible_moves(position):
+        score = alphabeta(p)
+        if best_score is None or better(score):
+            best_score = score
+            best_moves = [ m ]
+        elif score == best_score:
+            best_moves.append(m)
+    return random.choice(best_moves)
 
 def play(human, position):
     while game_state(position) == 'in_progress':
@@ -65,7 +78,7 @@ def play(human, position):
         if to_play(position) == human:
             move = int(input("Move: "))
         else:
-            _, move = search(position)
+            move = search(position)
         position = position[:move] + (to_play(position),) + position[move+1:]
     show_result(position, human)
 

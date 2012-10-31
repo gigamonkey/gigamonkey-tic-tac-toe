@@ -3,6 +3,8 @@
 from itertools import permutations
 import random
 
+# Board representation: 9-tuple of Xs, Os, and Nones.
+
 rows  = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 cols  = [[0, 3, 6], [1, 4, 7], [2, 5, 8]]
 diags = [[0, 4, 8], [6, 4, 2]]
@@ -11,11 +13,11 @@ lines = rows + cols + diags
 board_fmt = "---+---+---\n".join([" {} | {} | {}\n"] * 3)
 
 def show(p):
-    print(board_fmt.format(*[x if x is not None else i for i, x in enumerate(p)]))
+    print(board_fmt.format(*[x or i for i, x in enumerate(p)]))
 
 def n_move_positions(n):
     marks = list('XOXOXOXOX'[:n]) + ([None] * (9 - n))
-    return (p for p in set(permutations(marks, 9)) if game_state(p) )
+    return (p for p in set(permutations(marks, 9)) if game_state(p))
 
 def game_state(position):
     threes = list({ three_in_a_row(position, line) for line in lines } - { None })
@@ -27,7 +29,7 @@ def game_state(position):
         return False
 
 def three_in_a_row(position, line):
-    marks = [ position[i] for i in line if position[i] is not None ]
+    marks = [ position[i] for i in line if position[i] ]
     return marks[0] if len(marks) == 3 and len(set(marks)) == 1 else None
 
 def to_play(position):
@@ -67,7 +69,6 @@ def possible_moves(position):
 def play(db, human, position):
     while game_state(position) == 'in_progress':
         show(position)
-        print('{}\n'.format(db[position]))
         if to_play(position) == human:
             move = int(input("Move: "))
         else:
