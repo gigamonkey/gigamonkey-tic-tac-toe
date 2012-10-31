@@ -1,3 +1,10 @@
-Simple tic-tac-toe game based on the idea of Ken Thompson's perfect
-chess endgame player. Code golfed as far as I could without totally
+Three versions of a simple tic-tac-toe game.
+
+perfect.py is based on the idea of Ken Thompson's perfect chess
+endgame player. Code golfed as far as I could without totally
 obfuscating it to get it under 100 lines.
+
+search.py is a completely brute force search.
+
+alphabeta.py Also implements a search but uses alpha-beta pruning to
+do less work.
