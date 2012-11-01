@@ -37,8 +37,9 @@ def to_play(position):
 
 def score(position, db):
     state = game_state(position)
-    if   state == 'X':           return { 'score':  1, 'moves': None }
-    elif state == 'O':           return { 'score': -1, 'moves': None }
+    empty = position.count(None)
+    if   state == 'X':           return { 'score':  1 + empty, 'moves': None }
+    elif state == 'O':           return { 'score': -1 - empty, 'moves': None }
     elif state == 'draw':        return { 'score':  0, 'moves': None }
     elif state == 'in_progress': return find_best_score(position, db)
     else: raise Exception("Can't score illegal position {}".format(position))
